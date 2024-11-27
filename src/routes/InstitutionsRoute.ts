@@ -12,7 +12,7 @@ route.post("/create-institute", async_middleware(create_institution));
 route.put("/update-institute", async_middleware(create_institution)); 
 
 /* REG. INST CUM STAFF ROUTES */
-route.get("/get-all-staffs", async_middleware(get_all_staffs)); 
+route.get("/get-all-staffs/:institution_id", async_middleware(get_all_staffs)); 
 route.post("/create-staff", async_middleware(create_staff)); 
 route.put("/update-staff/:id", async_middleware(update_staff));
 route.delete("/delete-staff/:id", async_middleware(delete_staff));
