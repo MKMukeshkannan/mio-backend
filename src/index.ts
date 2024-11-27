@@ -3,6 +3,7 @@ import institutionRoute from './routes/InstitutionsRoute.js';
 import error_handler from './middleware/ErrorHandler.js';
 import credentials, { corsOptions } from './middleware/CredentialMiddleware.js';
 import cors from 'cors'
+import { PORT } from './utils/config.js';
 
 const app = express();
 
@@ -19,6 +20,6 @@ app.get("/test", (_, res) => {
 
 app.use(error_handler);
 
-app.listen(6969, () => {
-  console.log("Listening on port 🚀 6969:");
+app.listen(PORT, () => {
+  console.log(`Listening on port 🚀 : ${PORT}`);
 });
