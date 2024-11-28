@@ -10,7 +10,7 @@ const InstitutionSchema = z.object({
   mail: z.string({required_error: "mail is required"}).email(),
   website: z.string({required_error: "website is required"}).url(),
   username: z.string({required_error: "username is required"}).min(6).max(12),
-  password: z.string({required_error: "password is required"}),
+  hashed_password: z.string({required_error: "password is required"}),
 });
 
 const InstitutionId = z.string().uuid({ message: "Invalid UUID" });
@@ -25,14 +25,31 @@ const StaffSchema = z.object({
     profile_picture: z.string({required_error: "profile_picture: is required"}).url(),
     institution: z.string({required_error: "institution: is required"}),
     username: z.string({required_error: "username: is required"}).min(6).max(30),
-    password: z.string({required_error: "password: is required"}),
+    hashed_password: z.string({required_error: "password: is required"}),
 });
 
-const InstitutionCreation = InstitutionSchema.omit({ins_id: true,});
-const StaffCreation = StaffSchema.omit({staff_id: true,});
+const Login = z.object({
+    username: z.string({required_error: "username: is required"}).min(6).max(30),
+    password: z.string({required_error: "password: is required"}),
+});
+const LoginDatabase = z.object({
+    username: z.string({required_error: "username: is required"}).min(6).max(30),
+    hashed_password: z.string({required_error: "password: is required"}),
+});
+
+const InstitutionCreation = InstitutionSchema.omit({ins_id: true, hashed_password: true}).extend({password: z.string({required_error: "Password is required" })});
+const StaffCreation = StaffSchema.omit({staff_id: true, hashed_password: true}).extend({password: z.string({required_error: "Password is required" })});
+
+const SessionSchema = z.object({
+  id: z.string(),
+  refresh_token: z.string(),
+  type: z.string()
+});
 
 type InstitutionType = z.infer<typeof InstitutionSchema>;
 type StaffType = z.infer<typeof StaffSchema>;
+type LoginType = z.infer<typeof LoginDatabase>;
+type SessionType = z.infer<typeof SessionSchema>;
 
 
-export { InstitutionCreation, InstitutionId, StaffCreation, InstitutionType, StaffType};
+export { InstitutionCreation, InstitutionId, StaffCreation, InstitutionType, StaffType, Login, LoginType, InstitutionSchema, StaffSchema, SessionType};
