@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { InstitutionType, InstitutionCreation, Login, LoginType, StaffCreation, StaffType, SessionType } from "../utils/validators.js";
+import { InstitutionType, InstitutionCreation, Login, StaffCreation, StaffType, SessionType } from "../utils/validators.js";
 import bcrypt from 'bcrypt';
 import { generate_access_token, generate_refresh_token, pool, REFRESH_SECRET } from "../utils/config.js";
 import jsonwebtoken from 'jsonwebtoken';
@@ -111,15 +111,14 @@ async function get_refresh_token(req: Request, res: Response) {
   const refresh_token = cookie.jwt;
 
   const result: SessionType = (await pool.query( "SELECT * FROM sessions WHERE refresh_token = $1", [refresh_token])).rows[0];
-  if (!result) return res.sendStatus(403);
+  if (!result) return res.sendStatus(404);
 
   if (!REFRESH_SECRET) throw new Error("invalid token");
 
-  console.log(result);
   if (result.type == "INS") {
     const data: InstitutionType = (await pool.query("SELECT * FROM institutions WHERE ins_id=$1", [ result.id ])).rows[0];
     verify(refresh_token, REFRESH_SECRET, (err: any, decoded: any) => {
-      if (err || data.ins_id !== decoded.id) return res.sendStatus(403);
+      if (err || data.ins_id !== decoded.id) return res.sendStatus(404);
       const access_token = generate_access_token({
         id: data.ins_id,
         name: data.name,
@@ -127,7 +126,7 @@ async function get_refresh_token(req: Request, res: Response) {
         email: data.mail,
       });
 
-      res.status(200).json({ name: data.name, email: data.mail, access_token, });
+      return res.status(200).json({ name: data.name, email: data.mail, access_token, });
     });
 
   } else if (result.type === "STF") {
@@ -141,7 +140,7 @@ async function get_refresh_token(req: Request, res: Response) {
         email: data.email,
       });
 
-      res.status(200).json({ name: data.name, email: data.email, access_token, });
+      return res.status(200).json({ name: data.name, email: data.email, access_token, });
     });
   } 
 

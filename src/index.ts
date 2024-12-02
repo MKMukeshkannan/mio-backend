@@ -1,13 +1,14 @@
-import express from 'express';
-import institution_routes from './routes/InstitutionsRoute.js';
-import auth_routes from './routes/AuthRoute.js';
-import error_handler from './middleware/ErrorHandler.js';
-import credentials, { corsOptions } from './middleware/CredentialMiddleware.js';
-import cors from 'cors'
-import { PORT } from './utils/config.js';
-import cookie_parser from 'cookie-parser';
+import express from "express";
+import { Express } from "express";
+import institution_routes from "./routes/InstitutionsRoute.js";
+import auth_routes from "./routes/AuthRoute.js";
+import { error_handler } from "./middleware/ErrorHandler.js";
+import credentials, { corsOptions } from "./middleware/CredentialMiddleware.js";
+import cors from "cors";
+import { PORT } from "./utils/config.js";
+import cookie_parser from "cookie-parser";
 
-const app = express();
+const app: Express = express();
 
 app.use(credentials);
 app.use(cookie_parser());
