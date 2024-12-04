@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const InstitutionsSearchParams = z.object({
+  query: z.string(),
+  limit: z.number().optional(),
+  offset: z.number().optional()
+});
+
 const InstitutionSchema = z.object({
   ins_id: z.string(),
   name: z.string({required_error: "Name is required", invalid_type_error: "Name must be a string", }).min(6).max(50),
@@ -52,4 +58,4 @@ type LoginType = z.infer<typeof LoginDatabase>;
 type SessionType = z.infer<typeof SessionSchema>;
 
 
-export { InstitutionCreation, InstitutionId, StaffCreation, InstitutionType, StaffType, Login, LoginType, InstitutionSchema, StaffSchema, SessionType};
+export { InstitutionsSearchParams, InstitutionCreation, InstitutionId, StaffCreation, InstitutionType, StaffType, Login, LoginType, InstitutionSchema, StaffSchema, SessionType};

@@ -8,6 +8,7 @@ route.post("/institute/signup", async_middleware(institute_signup));
 route.post("/institute/login", async_middleware(institute_login));
 route.post("/staff/signup", async_middleware(staff_signup));
 route.post("/staff/login", async_middleware(staff_login));
+
 route.get("/logout", async_middleware(log_out));
 route.get("/refresh_token", async_middleware(get_refresh_token));
 

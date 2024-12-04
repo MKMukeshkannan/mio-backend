@@ -1,7 +1,14 @@
 import { Request, Response } from "express";
 import { pool } from "../utils/config.js";
-import { InstitutionType, InstitutionId, StaffType } from "../utils/validators.js";
+import { InstitutionType, InstitutionId, StaffType, InstitutionsSearchParams } from "../utils/validators.js";
 import { z } from "zod";
+
+async function search_institution(req: Request, res: Response) {
+  const { query } = InstitutionsSearchParams.parse(req.query)
+  const response = (await pool.query("SELECT ins_id, name FROM institutions WHERE name ~* $1;", [query])).rows;
+  res.status(200).json({ msg: "got all data", sucess: true, result: response });
+};
+
 
 async function get_all_institutions(_: Request, res: Response) {
   const result = await pool.query("SELECT * FROM institutions;");
@@ -54,4 +61,4 @@ async function delete_staff(_: Request, res: Response) {
   res.status(200).json({ msg: "delete_staff", sucess: true });
 }
 
-export { get_all_institutions, get_id, get_all_staffs, update_institution, update_staff, delete_staff, get_admin};
+export { get_all_institutions, search_institution, get_id, get_all_staffs, update_institution, update_staff, delete_staff, get_admin};
