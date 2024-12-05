@@ -72,8 +72,8 @@ async function create_staff(req: Request, res: Response) {
 
   const hashed_password = await bcrypt.hash(password, 10);
 
-  const params = [name, email, phone_number, department, id, username, hashed_password];
-  await pool.query(`INSERT INTO staffs (name, email, phone_number, department, institution, username, hashed_password) VALUES ($1, $2, $3, $4, $5, $6, $7);`, params);
+  const params = [name, email, phone_number, department, id, hashed_password];
+  await pool.query(`INSERT INTO staffs (name, email, phone_number, department, institution, hashed_password) VALUES ($1, $2, $3, $4, $5, $6);`, params);
 
   res.status(200).json({ msg: "staff created ", sucess: true });
 }

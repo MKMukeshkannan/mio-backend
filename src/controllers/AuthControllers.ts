@@ -8,7 +8,7 @@ const { verify } = jsonwebtoken;
 
 async function institute_login(req: Request, res: Response) {
   const {username, password} = Login.parse(req.body);
-  const result = await pool.query("SELECT * FROM institutions WHERE username=$1", [username]);
+  const result = await pool.query("SELECT * FROM institutions WHERE mail=$1", [username]);
 
   if (!result.rowCount) return res.status(400).send("Email do not exist"); 
   const institution_data: InstitutionType = result.rows[0];
@@ -43,17 +43,17 @@ async function institute_signup(req: Request, res: Response) {
 
   const hashed_password = await bcrypt.hash(password, 10);
 
-  const params = [name, address, logo_url, founded_year, phone_number, mail, website, username, hashed_password];
-  await pool.query(`INSERT INTO institutions ( name, address, logo_url, founded_year, phone_number, mail, website, username, hashed_password ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`, params);
+  const params = [name, address, logo_url, founded_year, phone_number, mail, website, hashed_password];
+  await pool.query(`INSERT INTO institutions ( name, address, logo_url, founded_year, phone_number, mail, website, hashed_password ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`, params);
 
   res.status(200).json({ msg: "created record sucessfully", sucess: true });
 }
 
 async function staff_login(req: Request, res: Response) {
   const {username, password} = Login.parse(req.body);
-  const result = await pool.query("SELECT * FROM staffs WHERE username=$1", [username]);
+  const result = await pool.query("SELECT * FROM staffs WHERE email=$1", [username]);
 
-  if (!result.rowCount) return res.status(400).send("Email do not exist"); 
+  if (!result.rowCount) return res.status(400).json({sucess: false, msg:"Email do not exist"}); 
   const staff_data: StaffType = result.rows[0];
   if (await bcrypt.compare(password, staff_data.hashed_password)) {
     const access_token = generate_access_token({
@@ -68,8 +68,9 @@ async function staff_login(req: Request, res: Response) {
       email: staff_data.email,
     });
 
-    await pool.query( "INSERT INTO sessions (id, refresh_token) VALUES ($1, $2, $3)", [staff_data.staff_id, refresh_token, "STF"]);
+    await pool.query( "INSERT INTO sessions (id, refresh_token, type) VALUES ($1, $2, $3)", [staff_data.staff_id, refresh_token, "STF"]);
 
+    res.cookie("access_token", access_token);
     res.cookie("jwt", refresh_token, { httpOnly: true, sameSite: "none", secure: true, maxAge: 7 * 24 * 60 * 60 * 1000, });
     res.status(200).json({ sucess: true, msg: "sucessfully autheticated", name: staff_data.name, email: staff_data.email, access_token, });
   } else {
