@@ -27,6 +27,7 @@ async function institute_login(req: Request, res: Response) {
 
     await pool.query( "INSERT INTO sessions (id, refresh_token, type) VALUES ($1, $2, $3)", [institution_data.ins_id, refresh_token, "INS"]);
 
+    res.cookie("access_token", access_token);
     res.cookie("jwt", refresh_token, { httpOnly: true, sameSite: "none", secure: true, maxAge: 7 * 24 * 60 * 60 * 1000, });
     res.status(200).json({ sucess: true, msg: "sucessfully autheticated", name: institution_data.name, email: institution_data.mail, access_token, });
   } else {
@@ -107,18 +108,18 @@ async function log_out(req: Request, res: Response) {
 
 async function get_refresh_token(req: Request, res: Response) {
   const cookie = req.cookies;
-  if (!cookie?.jwt) return res.sendStatus(401);
+  if (!cookie?.jwt) return res.status(401).json({sucess: false, error: "No JWT Token is given"});
   const refresh_token = cookie.jwt;
 
   const result: SessionType = (await pool.query( "SELECT * FROM sessions WHERE refresh_token = $1", [refresh_token])).rows[0];
-  if (!result) return res.sendStatus(404);
+  if (!result) return res.status(404).json({sucess: false, error: "refresh_token token is not found in database"});
 
   if (!REFRESH_SECRET) throw new Error("invalid token");
 
   if (result.type == "INS") {
     const data: InstitutionType = (await pool.query("SELECT * FROM institutions WHERE ins_id=$1", [ result.id ])).rows[0];
     verify(refresh_token, REFRESH_SECRET, (err: any, decoded: any) => {
-      if (err || data.ins_id !== decoded.id) return res.sendStatus(404);
+      if (err || data.ins_id !== decoded.id) return res.status(403).json({ sucess: false, error: "Decoded token is not yours" });
       const access_token = generate_access_token({
         id: data.ins_id,
         name: data.name,

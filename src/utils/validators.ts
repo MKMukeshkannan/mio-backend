@@ -24,12 +24,12 @@ const InstitutionId = z.string().uuid({ message: "Invalid UUID" });
 const StaffSchema = z.object({
     staff_id: z.string({required_error: "staff_id: is required"}),
     name: z.string({required_error: "name: is required"}).min(10).max(30),
-    designation: z.string({required_error: "designation: is required"}).min(3).max(30),
+    designation: z.string({required_error: "designation: is required"}).min(3).max(30).optional(),
     email: z.string({required_error: "email: is required"}).email(),
     phone_number: z.string({required_error: "phone_number: is required"}).length(10),
-    department: z.string({required_error: "department: is required"}).min(3).max(30),
-    profile_picture: z.string({required_error: "profile_picture: is required"}).url(),
-    institution: z.string({required_error: "institution: is required"}),
+    department: z.string({required_error: "department: is required"}).min(3).max(30).optional(),
+    profile_picture: z.string({required_error: "profile_picture: is required"}).url().optional(),
+    institution: z.string({required_error: "institution: is required"}).optional(),
     username: z.string({required_error: "username: is required"}).min(6).max(30),
     hashed_password: z.string({required_error: "password: is required"}),
 });
@@ -57,5 +57,4 @@ type StaffType = z.infer<typeof StaffSchema>;
 type LoginType = z.infer<typeof LoginDatabase>;
 type SessionType = z.infer<typeof SessionSchema>;
 
-
-export { InstitutionsSearchParams, InstitutionCreation, InstitutionId, StaffCreation, InstitutionType, StaffType, Login, LoginType, InstitutionSchema, StaffSchema, SessionType};
+export { InstitutionsSearchParams, InstitutionCreation, InstitutionId, StaffCreation, InstitutionType, StaffType, Login, LoginType, InstitutionSchema, StaffSchema, SessionType };
