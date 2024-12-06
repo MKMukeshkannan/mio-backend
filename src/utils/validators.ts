@@ -15,8 +15,13 @@ const InstitutionSchema = z.object({
   phone_number: z.string({required_error: "phone number is required"}).length(10),
   mail: z.string({required_error: "mail is required"}).email(),
   website: z.string({required_error: "website is required"}).url(),
-  username: z.string({required_error: "username is required"}).min(6).max(12),
   hashed_password: z.string({required_error: "password is required"}),
+
+  description: z.string().optional(),
+  cover_url: z.string().optional(),
+  is_archived: z.string().optional(),
+  linkedin: z.string().optional(),
+  instagram: z.string().optional(),
 });
 
 const InstitutionId = z.string().uuid({ message: "Invalid UUID" });
@@ -33,8 +38,16 @@ const StaffSchema = z.object({
     department: z.string({required_error: "department: is required"}).min(3).max(30).optional(),
     profile_picture: z.string({required_error: "profile_picture: is required"}).url().optional(),
     institution: z.string({required_error: "institution: is required"}).optional(),
-    username: z.string({required_error: "username: is required"}).min(6).max(30),
     hashed_password: z.string({required_error: "password: is required"}),
+    h_index: z.number().optional(),
+    total_citation: z.string().optional(),
+    linkedin: z.string().optional(),
+    layout: z.string().optional(),
+    description: z.string().optional(),
+    profile_picture_url: z.string().optional(),
+    i_index: z.string().optional(),
+    research_gate: z.string().optional(),
+    portfolio: z.string().optional(),
 });
 
 const Login = z.object({

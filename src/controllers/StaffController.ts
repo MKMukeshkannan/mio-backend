@@ -15,9 +15,9 @@ async function get_staff_id(req: Request, res: Response) {
 
 async function get_staff_publication(req: Request, res: Response) {
   const IdValidator = z.string();
-  const institution_id = IdValidator.parse(req.params.institution_id);
+  const staff_id = IdValidator.parse(req.params.staff_id);
 
-  const data = (await pool.query("SELECT * FROM staffs WHERE staff_id = $1;", [institution_id])).rows;
+  const data = (await pool.query("SELECT * FROM publications p, staffs s WHERE s.staff_id = $1 AND p.staff_id = s.staff_id;", [staff_id])).rows;
 
   res.status(200).json({ msg: "got all data", sucess: true, data });
 };
@@ -41,5 +41,3 @@ async function create_publication(req: Request, res: Response) {
 };
 
 export { get_staff_id, get_staff_publication, create_publication};
-
-

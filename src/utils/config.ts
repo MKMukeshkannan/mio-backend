@@ -27,14 +27,14 @@ const pool = new Pool({
 const generate_access_token = (payload: any) => {
   if (!JWT_SECRET) throw new Error("Invalid Secret");
 
-  const token = sign(payload, JWT_SECRET, { expiresIn: "1d" });
+  const token = sign(payload, JWT_SECRET, { expiresIn: "1h" });
   return token;
 };
 
 const generate_refresh_token = (payload: any) => {
   if (!REFRESH_SECRET) throw new Error("Invalid Secret");
 
-  const token = sign(payload, REFRESH_SECRET, { expiresIn: "30d" });
+  const token = sign(payload, REFRESH_SECRET, { expiresIn: "3h" });
   return token;
 };
 

@@ -4,6 +4,9 @@ import { InstitutionType, InstitutionId, StaffType, InstitutionsSearchParams, St
 import { z } from "zod";
 import bcrypt from 'bcrypt';
 
+import pkg from 'xlsx';
+const { readFile } = pkg;
+
 async function search_institution(req: Request, res: Response) {
   const { query } = InstitutionsSearchParams.parse(req.query)
   const response = (await pool.query("SELECT ins_id, name FROM institutions WHERE name ~* $1;", [query])).rows;
@@ -66,7 +69,7 @@ async function get_all_staffs(req: Request, res: Response) {
 }
 
 async function create_staff(req: Request, res: Response) {
-  const {name, department, email, username, phone_number, password } = StaffCreation.parse(req.body);
+  const {name, department, email, phone_number, password } = StaffCreation.parse(req.body);
   const IdValidator = z.object({id: z.string().uuid()});
   const { id } = IdValidator.parse(req.body.user);
 
@@ -76,6 +79,52 @@ async function create_staff(req: Request, res: Response) {
   await pool.query(`INSERT INTO staffs (name, email, phone_number, department, institution, hashed_password) VALUES ($1, $2, $3, $4, $5, $6);`, params);
 
   res.status(200).json({ msg: "staff created ", sucess: true });
+}
+
+async function create_multiple_staffs(req: Request, res: Response) {
+  const file = req.file?.path;
+  const IdValidator = z.object({id: z.string().uuid()});
+  const { id } = IdValidator.parse(req.body.user);
+
+  if (!file) return res.status(400).json({msg: "didn't receive the file"});
+
+  const workbook = readFile(file);
+  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  let all_params = [];
+  for (let i = 2; i < 5; ++i) {
+    let param = [];
+    param.push(worksheet[`A${i}`]?.v);
+    param.push(worksheet[`B${i}`]?.v);
+    param.push(worksheet[`C${i}`]?.v);
+    const hashed_password = await bcrypt.hash(worksheet[`D${i}`]?.v, 10);
+    param.push(hashed_password);
+    param.push(worksheet[`E${i}`]?.v);
+    param.push(worksheet[`F${i}`]?.v);
+    param.push(id);
+
+    all_params.push(param)
+  }
+
+  console.log(all_params);
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+
+    /// for (let x of all_params) {
+      await client.query("INSERT INTO staffs (name, email, phone_number, hashed_password, department, google_scholer_id, institution) VALUES ( $1 ,$2 ,$3 ,$4 ,$5 ,$6);", all_params);
+    /// };
+
+    await client.query('COMMIT')
+  } catch (e) {
+    await client.query('ROLLBACK')
+    throw e
+  } finally {
+    client.release()
+  }
+
+  res.status(200).json({ msg: "multiple staff", sucess: true });
 }
 
 async function update_institution(_: Request, res: Response) {
@@ -90,4 +139,4 @@ async function delete_staff(_: Request, res: Response) {
   res.status(200).json({ msg: "delete_staff", sucess: true });
 }
 
-export { get_all_institutions, create_staff, search_institution, get_id, get_all_staffs, update_institution, update_staff, delete_staff, get_admin};
+export { get_all_institutions, create_staff, create_multiple_staffs, search_institution, get_id, get_all_staffs, update_institution, update_staff, delete_staff, get_admin};

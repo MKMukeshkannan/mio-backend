@@ -29,7 +29,7 @@ async function institute_login(req: Request, res: Response) {
 
     res.cookie("access_token", access_token);
     res.cookie("jwt", refresh_token, { httpOnly: true, sameSite: "none", secure: true, maxAge: 7 * 24 * 60 * 60 * 1000, });
-    res.status(200).json({ sucess: true, msg: "sucessfully autheticated", name: institution_data.name, email: institution_data.mail, access_token, });
+    res.status(200).json({ sucess: true, msg: "sucessfully autheticated", name: institution_data.name, email: institution_data.mail, access_token, type: 'INS' });
   } else {
     res.status(401).json({sucess: false, msg: "password is wrong"});
   };
@@ -39,7 +39,7 @@ async function institute_signup(req: Request, res: Response) {
   if (!req.body) return;
   const {
     password, phone_number, founded_year, address,
-    logo_url, mail, name, username, website } = InstitutionCreation.parse(req.body);
+    logo_url, mail, name, website } = InstitutionCreation.parse(req.body);
 
   const hashed_password = await bcrypt.hash(password, 10);
 
@@ -80,11 +80,11 @@ async function staff_login(req: Request, res: Response) {
 
 async function staff_signup(req: Request, res: Response) {
   if (!req.body) return;
-  const { name, phone_number, username, department, designation, email, institution, profile_picture, password } = StaffCreation.parse(req.body);
+  const { name, phone_number, department, designation, email, institution, profile_picture, password } = StaffCreation.parse(req.body);
   const hashed_password = await bcrypt.hash(password, 10);
 
-  const params = [ name, designation, email, phone_number, department, profile_picture, institution, username, hashed_password ];
-  await pool.query(`INSERT INTO staffs ( name, designation, email, phone_number, department, profile_picture, institution, username, hashed_password ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`, params);
+  const params = [ name, designation, email, phone_number, department, profile_picture, institution, hashed_password ];
+  await pool.query(`INSERT INTO staffs ( name, designation, email, phone_number, department, profile_picture, institution, hashed_password ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`, params);
 
   res.status(200).json({ msg: "created staff record sucessfully", sucess: true });
 }
@@ -98,11 +98,13 @@ async function log_out(req: Request, res: Response) {
   const data = result.rows[0];
   if (!data) {
     res.clearCookie("jwt", { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.clearCookie("access_token");
     return res.sendStatus(203);
   }
 
   await pool.query("DELETE FROM sessions WHERE refresh_token=$1", [ refresh_token ]);
   res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true, });
+  res.clearCookie("access_token");
   res.sendStatus(204);
 }
 
@@ -120,7 +122,12 @@ async function get_refresh_token(req: Request, res: Response) {
   if (result.type == "INS") {
     const data: InstitutionType = (await pool.query("SELECT * FROM institutions WHERE ins_id=$1", [ result.id ])).rows[0];
     verify(refresh_token, REFRESH_SECRET, (err: any, decoded: any) => {
-      if (err || data.ins_id !== decoded.id) return res.status(403).json({ sucess: false, error: "Decoded token is not yours" });
+      if (err || data.ins_id !== decoded.id) {
+
+        res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true, });
+        res.clearCookie("access_token");
+        return res.status(403).json({ sucess: false, error: "maybe expired or Decoded token is not yours" });
+      }
       const access_token = generate_access_token({
         id: data.ins_id,
         name: data.name,
@@ -128,13 +135,14 @@ async function get_refresh_token(req: Request, res: Response) {
         email: data.mail,
       });
 
-      return res.status(200).json({ name: data.name, email: data.mail, access_token, });
+      res.cookie("access_token", access_token);
+      return res.status(200).json({ name: data.name, email: data.mail, access_token, type: "INS" });
     });
 
   } else if (result.type === "STF") {
     const data: StaffType = (await pool.query("SELECT * FROM staffs WHERE staff_id=$1", [ result.id ])).rows[0];
     verify(refresh_token, REFRESH_SECRET, (err: any, decoded: any) => {
-      if (err || data.staff_id !== decoded.id) return res.sendStatus(403);
+      if (err || data.staff_id !== decoded.id) return res.status(403).json({ sucess: false, error: "maybe expired or Decoded token is not yours" });
       const access_token = generate_access_token({
         id: data.staff_id,
         name: data.name,
@@ -142,11 +150,12 @@ async function get_refresh_token(req: Request, res: Response) {
         email: data.email,
       });
 
-      return res.status(200).json({ name: data.name, email: data.email, access_token, });
+      res.cookie("access_token", access_token);
+      return res.status(200).json({ name: data.name, email: data.email, access_token, type: "STF"});
     });
   } 
 
-  res.status(403).json({msg: "invalid type", sucess: false});
+  res.status(400).json({msg: "invalid type", sucess: false});
 }
 
 
