@@ -1,6 +1,9 @@
 import dotenv from 'dotenv'
 import jsonwebtoken from 'jsonwebtoken';
 import pkg from "pg";
+import { createClient as Bucket } from '@supabase/supabase-js'
+
+
 
 const { Pool } = pkg;
 const { sign } = jsonwebtoken;
@@ -10,6 +13,8 @@ dotenv.config();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET: string | undefined = process.env.ACCESS_TOKEN_SECRET;
 const REFRESH_SECRET: string | undefined = process.env.REFRESH_TOKEN_SECRET;
+const SUPABASE_URL: string | undefined = process.env.SUPABASE_URL;
+const SUPABASE_KEY: string | undefined = process.env.SUPABASE_KEY;
 
 const pool = new Pool({
   user: process.env.DB_USER || "",
@@ -33,4 +38,6 @@ const generate_refresh_token = (payload: any) => {
   return token;
 };
 
-export {generate_refresh_token, generate_access_token, pool, PORT, REFRESH_SECRET, JWT_SECRET};
+const bucket = Bucket(SUPABASE_URL || '', SUPABASE_KEY || '')
+
+export {generate_refresh_token, generate_access_token, pool, bucket, PORT, REFRESH_SECRET, JWT_SECRET};
