@@ -31,6 +31,7 @@ async function create_publication(req: Request, res: Response) {
     citation: z.number(),
     url: z.string(),
     year: z.number(),
+    index: z.number(),
   });
   const {publisher, title, type, description, url, year, citation, } = PublicationValidator.parse(req.body);
 
@@ -40,4 +41,33 @@ async function create_publication(req: Request, res: Response) {
   res.status(200).json({ msg: "got all data", sucess: true });
 };
 
-export { get_staff_id, get_staff_publication, create_publication};
+async function update_staff(req: Request, res: Response) {
+    const UpdateValidator = z.object({
+        staff_id: z.string().uuid(),
+        attribute: z.string(),
+        value: z.string(),
+    });
+    const {staff_id, attribute , value} = UpdateValidator.parse(req.body);
+
+    const params = [attribute, value, staff_id];
+    await pool.query(`UPDATE staffs SET $1 = $2 WHERE staff_id = $3;`, params);
+
+    res.status(200).json({ msg: "update sucessfull", sucess: true });
+}
+
+async function populate_staff_citation(req: Request, res: Response) {
+    const UpdateValidator = z.object({
+        staff_id: z.string().uuid(),
+        year_citation: z.array(z.tuple([z.number(), z.number()])),
+    });
+    const {staff_id, year_citation} = UpdateValidator.parse(req.body);
+
+    for (const [year, citation] of year_citation) {
+        const params = [staff_id, year, citation];
+        await pool.query(`INSERT INTO staff_year_citation (staff_id, year, citation) VALUES ($1, $2, $3);`, params);
+    }
+
+    res.status(200).json({ msg: "citation population is sucessfull", sucess: true });
+}
+
+export { get_staff_id, get_staff_publication, create_publication, update_staff, populate_staff_citation };

@@ -3,8 +3,6 @@ import jsonwebtoken from 'jsonwebtoken';
 import pkg from "pg";
 import { createClient as Bucket } from '@supabase/supabase-js'
 
-
-
 const { Pool } = pkg;
 const { sign } = jsonwebtoken;
 
